@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:bitcoin_ticker_flutter/services/crypto.dart';
+import 'package:bitcoin_ticker_flutter/widgets/crypto_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -12,8 +13,8 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  String selectedCurrency = 'USD';
-  String rate = '?';
+  String selectedCurrency = 'AUD';
+  Map cryptoValues = {};
 
   CryptoService crypto = CryptoService();
 
@@ -24,10 +25,11 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 
   Future<void> updateRates(String currency) async {
-    var coinData = await crypto.cryptoValue('BTC', currency);
+    var cryptoData = await crypto.cryptoValue(currency);
+
     setState(() {
+      cryptoValues = cryptoData;
       selectedCurrency = currency;
-      rate = coinData['rate'].toStringAsFixed(2);
     });
   }
 
@@ -46,54 +48,47 @@ class _PriceScreenState extends State<PriceScreen> {
     return DropdownButton<String>(
       value: selectedCurrency,
       items: items,
-      onChanged: (currency) {
-        updateRates(currency!);
-      },
+      onChanged: (currency) => updateRates(currency!),
     );
   }
 
   CupertinoPicker iOSPicker() {
-    List<Widget> items = [];
+    List<Text> items = [];
 
     for (String currency in currenciesList) items.add(Text(currency));
 
     return CupertinoPicker(
       itemExtent: 32.0,
-      onSelectedItemChanged: (index) => print(index),
+      onSelectedItemChanged: (index) => updateRates(currenciesList[index]),
       children: items,
     );
+  }
+
+  List<CryptoCard> cryptoCards() {
+    List<CryptoCard> cryptos = [];
+
+    for (String crypto in cryptoList) {
+      cryptos.add(CryptoCard(
+          crypto: crypto,
+          cryptoValue: cryptoValues[crypto] ?? '?',
+          selectedCurrency: selectedCurrency));
+    }
+
+    return cryptos;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🤑 Coin Ticker'),
+        title: const Text('🤑 Coin Ticker'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $rate $selectedCurrency',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          Column(
+            children: cryptoCards(),
           ),
           Container(
             height: 150.0,
