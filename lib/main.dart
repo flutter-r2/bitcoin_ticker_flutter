@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'models/environment.dart';
 import 'price_screen.dart';
 
 Future<void> main() async {
